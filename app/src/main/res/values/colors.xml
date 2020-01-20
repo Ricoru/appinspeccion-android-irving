@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#008577</color>
+    <color name="colorPrimaryDark">#00574B</color>
+    <color name="colorAccent">#D81B60</color>
+
+    <color name="colorGray_400">#BDBDBD</color>
+    <color name="colorGray_600">#757575</color>
+
+    <color name="grey_60">#666666</color>
+
+    <color name="colorBlack_900">#212121</color>
+    <color name="colorOrange_800">#EF6C00</color>
+
+    <color name="colorGray_300">#E0E0E0</color>
+
+    <color name="colorText">#424241</color>
+    <color name="colorSeparator">#5E5D5D</color>
+    <color name="colorBackgroundDialog">#ffffff</color>
+
+    <string name="action_setting">Configuración</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_ok">Si</string>
+    <string name="action_no">No</string>
+
+</resources>

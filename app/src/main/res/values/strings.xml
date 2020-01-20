@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_name">AppInspeccion</string>
+
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Ingresar</string>
+
+    <string name="action_cancelar">Cancelar</string>
+    <string name="action_eliminar">Eliminar</string>
+
+    <string name="lbl_tomar_fotos">Tomar Fotos</string>
+
+    <string name="error_field_required">Este campo es requerido</string>
+    <string name="error_invalid_email">El email es invalido</string>
+    <string name="error_authentication">Usuario y/o password incorrectos.</string>
+
+    <string name="dialog_alert_text">Sincronizando …</string>
+    <string name="msg_check_playservice">Este disposito es incompatible para envio de Notificaciones</string>
+
+    <string name="lbl_login_usuario">Autenticando cuenta…</string>
+    <string name="lbl_enviando_formulario">Enviando información…</string>
+    <string name="lbl_form_upload_file">Subiendo las imagenes adjuntadas…</string>
+    <string name="lbl_porfavor_espere">Por favor, espere</string>
+
+    <string name="lbl_password_default">123456789</string>
+    <string name="lbl_password_incorrect">Password incorrecto</string>
+
+    <string name="prompt_resetpassword"><u>Restablecer Contraseña?</u></string>
+    <string name="lbl_ingresar">Ingresar</string>
+
+    <string name="msj_gps_title">GPS configuración</string>
+    <string name="msj_gps_configutarion">Es necesario tener el GPS activo para continuar. ¿Quieres ir al menú de configuración?</string>
+    <string name="lbl_agregar_inspeccion">Agregar Inspección</string>
+    <string name="lbl_cerrar_session">Cerrar sesión</string>
+    <string name="lbl_formulario">Formulario</string>}
+    <string name="main_logout_content">¿Está seguro que desea cerrar sesión?</string>
+
+</resources>

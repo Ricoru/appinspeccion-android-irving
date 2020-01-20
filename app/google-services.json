@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "218122305598",
+    "firebase_url": "https://appinspeccion-f2fae.firebaseio.com",
+    "project_id": "appinspeccion-f2fae",
+    "storage_bucket": "appinspeccion-f2fae.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:218122305598:android:6add4ebccaa074e398916f",
+        "android_client_info": {
+          "package_name": "me.buddyoruna.appinspeccion"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "218122305598-1vse42ij184u3ahjo38djjbi5urresij.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA5CfYohpFAD1w9QQwfxUtM0WR0qkK1kzA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "218122305598-1vse42ij184u3ahjo38djjbi5urresij.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
