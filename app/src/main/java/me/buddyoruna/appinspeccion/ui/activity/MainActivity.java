@@ -1,6 +1,9 @@
 package me.buddyoruna.appinspeccion.ui.activity;
 
+import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,6 +12,9 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -27,12 +33,15 @@ import java.util.ArrayList;
 
 import butterknife.ButterKnife;
 import me.buddyoruna.appinspeccion.R;
+import me.buddyoruna.appinspeccion.ui.util.GPSUtil;
 import me.buddyoruna.appinspeccion.ui.util.MessageUtil;
+import me.buddyoruna.appinspeccion.ui.util.PermisosUtil;
 
 public class MainActivity extends BaseActivity implements OnMapReadyCallback, GoogleMap.OnMyLocationButtonClickListener,
         GoogleMap.OnMyLocationClickListener {
 
     private GoogleMap mMap;
+    private GPSUtil mGPSUtil;
     private Location myLocation;
     private LatLng myLocationLatLng;
     private MaterialDialog progressDialogRequired;
@@ -52,6 +61,9 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback, Go
         mapFragment.getMapAsync(this);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        mGPSUtil = new GPSUtil(this);
+
+        isPermisosLocation();
     }
 
     @Override
@@ -179,7 +191,7 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback, Go
             if (myLocation != null) {
                 mMap.addMarker(new MarkerOptions()
                         .title("Ubicación actual")
-                        .snippet("Evaluar inspección")
+                        .snippet("Realizar inspección")
                         .draggable(true)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
                         .position(new LatLng(myLocation.getLatitude(), myLocation.getLongitude()))
@@ -203,6 +215,49 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback, Go
                         // Logic to handle location object
                     }
                 });
+    }
+
+    public boolean isPermisosLocation() {
+        if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
+            if (checkLocationPermission()) {
+                getLastLocation();
+                return true;
+            }
+            return false;
+        }
+        getLastLocation();
+        return true;
+    }
+
+    public boolean checkLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    android.Manifest.permission.ACCESS_FINE_LOCATION)) {
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+                new AlertDialog.Builder(this)
+                        .setTitle("Permiso requerido")
+                        .setMessage("Esta aplicación necesita acceder a tu ubicación para mostrar el mapa")
+                        .setPositiveButton("OK", (DialogInterface dialogInterface, int i) -> {
+                            //Prompt the user once explanation has been shown
+                            PermisosUtil.askLocationPermission(MainActivity.this);
+                        })
+                        .create()
+                        .show();
+            } else {
+                // No explanation needed, we can request the permission.
+                PermisosUtil.askLocationPermission(MainActivity.this);
+            }
+            return false;
+        } else {
+            return true;
+        }
     }
 
 }

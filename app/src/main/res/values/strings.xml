@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">AppInspeccion</string>
+    <string name="app_name">App Inspeccion</string>
 
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password</string>

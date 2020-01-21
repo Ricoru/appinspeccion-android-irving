@@ -35,6 +35,7 @@ import me.buddyoruna.appinspeccion.domain.entity.EstadoInspeccion;
 import me.buddyoruna.appinspeccion.domain.entity.FileInspeccion;
 import me.buddyoruna.appinspeccion.domain.entity.TipoInspeccion;
 import me.buddyoruna.appinspeccion.domain.response.Resource;
+import me.buddyoruna.appinspeccion.ui.contract.IBaseOnClick;
 import me.buddyoruna.appinspeccion.ui.fragment.ContentFotosFragment;
 import me.buddyoruna.appinspeccion.ui.util.CustomDialog;
 import me.buddyoruna.appinspeccion.ui.util.MessageUtil;
@@ -202,6 +203,7 @@ public class FormularioActivity extends BaseActivity {
         progressDialog = new CustomDialog(FormularioActivity.this, getString(R.string.lbl_porfavor_espere),
                 getString(R.string.lbl_enviando_formulario));
         progressDialog.showDialog();
+
         if (!mMasterSession.values.fileListFormDynamic.isEmpty()) {
             Observable
                     .just(mMasterSession.values.fileListFormDynamic)
@@ -219,7 +221,6 @@ public class FormularioActivity extends BaseActivity {
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(listFiles -> {
-                        Log.i("INFO", "listaFiles subidos " + new Gson().toJson(listFiles));
                         updateUploadFiles(listFiles);
                         if (validateFilesSubidos()) {
                             registrarFormulario(tipoInspeccion, txt_direccion.getText().toString(), buzonInicio, buzonFin, longitud,
@@ -249,8 +250,7 @@ public class FormularioActivity extends BaseActivity {
                         return;
                     }
 
-                    limpiarDatos();
-                    MessageUtil.message(FormularioActivity.this, resource.data);
+                    showSuccessDialog("Registro Exitoso", resource.data, () -> limpiarDatos());
                 });
     }
 
