@@ -8,12 +8,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -55,8 +53,6 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback, Go
     private MaterialDialog gpsDialog;
     private BroadcastReceiver gpsChangeReceiver;
 
-    private boolean inMoveCamera = false;
-
     private FusedLocationProviderClient fusedLocationClient;
 
     @Override
@@ -72,10 +68,6 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback, Go
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         mGPSUtil = new GPSUtil(this);
         gpsDialog = mGPSUtil.showSettingsGPSBlocked(R.string.msg_gps_configutarion_mapa);
-
-        if (!GPSUtil.isGPSEnabled(MainActivity.this)) {
-            gpsDialog.show();
-        }
 
         isPermisosLocation();
     }
@@ -97,12 +89,10 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback, Go
 //        });
 
         mMap.setOnCameraMoveStartedListener(i -> {
-            inMoveCamera = true;
             Log.i("INFO", "setOnCameraMoveStartedListener");
         });
 
         mMap.setOnCameraIdleListener(() -> {
-            inMoveCamera = false;
             Log.i("INFO", "setOnCameraIdleListener");
         });
 
@@ -134,6 +124,10 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback, Go
     @Override
     protected void onResume() {
         super.onResume();
+        if (!GPSUtil.isGPSEnabled(MainActivity.this)) {
+            gpsDialog.show();
+        }
+
         if (gpsChangeReceiver == null) {
             gpsChangeReceiver = new GpsChangeReceiver() {
                 @Override

@@ -49,7 +49,7 @@ public class FormularioViewModel extends AndroidViewModel {
         formulario.buzInicio = buzInicio;
         formulario.buzFin = buzFin;
         formulario.longitudA = longitudA;
-        formulario.fechaHoraStr = DateUtil.getDateNowFormat("");
+        formulario.fechaHoraStr = DateUtil.getDateNowFormat("dd/MM/yyyy HH:mm");
         formulario.fechaHora = DateUtil.getDateNow().getTime();
         formulario.estado = estado;
         formulario.distanciaEntreBuzones = distanciaEntreBuzones;

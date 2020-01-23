@@ -2,7 +2,6 @@ package me.buddyoruna.appinspeccion.ui.activity;
 
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -17,7 +16,6 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +33,6 @@ import me.buddyoruna.appinspeccion.domain.entity.EstadoInspeccion;
 import me.buddyoruna.appinspeccion.domain.entity.FileInspeccion;
 import me.buddyoruna.appinspeccion.domain.entity.TipoInspeccion;
 import me.buddyoruna.appinspeccion.domain.response.Resource;
-import me.buddyoruna.appinspeccion.ui.contract.IBaseOnClick;
 import me.buddyoruna.appinspeccion.ui.fragment.ContentFotosFragment;
 import me.buddyoruna.appinspeccion.ui.util.CustomDialog;
 import me.buddyoruna.appinspeccion.ui.util.MessageUtil;

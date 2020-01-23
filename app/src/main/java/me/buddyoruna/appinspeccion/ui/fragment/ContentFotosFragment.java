@@ -194,7 +194,7 @@ public class ContentFotosFragment extends Fragment implements ImageViewFragment.
 //                }
 //            }
             ImagePicker.with(this)                         //  Initialize ImagePicker with activity or fragment context
-                    .setToolbarColor("#212121")         //  Toolbar color
+                    .setToolbarColor("#FFFFFF")         //  Toolbar color
                     .setStatusBarColor("#000000")       //  StatusBar color (works with SDK >= 21  )
                     .setToolbarTextColor("#212121")     //  Toolbar text color (Title and Done button)
                     .setToolbarIconColor("#212121")     //  Toolbar icon color (Back and Camera button)
