@@ -1,10 +1,14 @@
 package me.buddyoruna.appinspeccion.ui.activity;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -15,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -32,7 +37,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import java.util.ArrayList;
 
 import butterknife.ButterKnife;
+import me.buddyoruna.appinspeccion.BuildConfig;
 import me.buddyoruna.appinspeccion.R;
+import me.buddyoruna.appinspeccion.reciver.GpsChangeReceiver;
 import me.buddyoruna.appinspeccion.ui.util.GPSUtil;
 import me.buddyoruna.appinspeccion.ui.util.MessageUtil;
 import me.buddyoruna.appinspeccion.ui.util.PermisosUtil;
@@ -45,6 +52,8 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback, Go
     private Location myLocation;
     private LatLng myLocationLatLng;
     private MaterialDialog progressDialogRequired;
+    private MaterialDialog gpsDialog;
+    private BroadcastReceiver gpsChangeReceiver;
 
     private boolean inMoveCamera = false;
 
@@ -62,6 +71,11 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback, Go
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         mGPSUtil = new GPSUtil(this);
+        gpsDialog = mGPSUtil.showSettingsGPSBlocked(R.string.msg_gps_configutarion_mapa);
+
+        if (!GPSUtil.isGPSEnabled(MainActivity.this)) {
+            gpsDialog.show();
+        }
 
         isPermisosLocation();
     }
@@ -115,6 +129,28 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback, Go
         });
 
         getLastLocation();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (gpsChangeReceiver == null) {
+            gpsChangeReceiver = new GpsChangeReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    super.onReceive(context, intent);
+                    if (gpsDialog.isShowing()) gpsDialog.dismiss();
+                    if (!GPSUtil.isGPSEnabled(MainActivity.this)) {
+                        gpsDialog.show();
+                    } else {
+                        getLastLocation();
+                    }
+                }
+            };
+        }
+
+        IntentFilter filter = new IntentFilter(BuildConfig.APPLICATION_ID + "." + GPSUtil.INTENT_NAME_CHANGE_STATUS);
+        LocalBroadcastManager.getInstance(MainActivity.this).registerReceiver(gpsChangeReceiver, filter);
     }
 
     @Override
@@ -207,6 +243,7 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback, Go
     private void getLastLocation() {
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(this, location -> {
+                    Log.i("INFO", "location " + location);
                     // Got last known location. In some rare situations this can be null.
                     if (location != null) {
                         myLocation = location;
@@ -217,7 +254,7 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback, Go
                 });
     }
 
-    public boolean isPermisosLocation() {
+    private boolean isPermisosLocation() {
         if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -260,4 +297,11 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback, Go
         }
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (gpsChangeReceiver != null) {
+            LocalBroadcastManager.getInstance(MainActivity.this).unregisterReceiver(gpsChangeReceiver);
+        }
+    }
 }

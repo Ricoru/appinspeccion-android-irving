@@ -35,4 +35,6 @@
     <string name="lbl_formulario">Formulario</string>}
     <string name="main_logout_content">¿Está seguro que desea cerrar sesión?</string>
 
+    <string name="msg_gps_configutarion_mapa">Es necesario tener el GPS activo para poder visualizar correctamente tu ubicación actual en el Mapa.</string>
+
 </resources>

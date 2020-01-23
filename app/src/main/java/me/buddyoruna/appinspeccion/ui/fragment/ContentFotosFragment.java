@@ -24,6 +24,9 @@ import com.google.android.flexbox.AlignItems;
 import com.google.android.flexbox.FlexDirection;
 import com.google.android.flexbox.FlexWrap;
 import com.google.android.flexbox.FlexboxLayout;
+import com.nguyenhoanglam.imagepicker.model.Config;
+import com.nguyenhoanglam.imagepicker.model.Image;
+import com.nguyenhoanglam.imagepicker.ui.imagepicker.ImagePicker;
 
 import java.io.File;
 import java.io.IOException;
@@ -173,29 +176,51 @@ public class ContentFotosFragment extends Fragment implements ImageViewFragment.
         }
 
         try {
-            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
-                // Create the File where the photo should go
-                File photoFile = null;
-                try {
-                    photoFile = ImageUtils.createImageFile(getContext(), mMasterSession.values.currentUser.key);
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
-                if (photoFile != null) {
-                    Uri photoURI = FileProvider.getUriForFile(getContext(),
-                            "me.buddyoruna.appinspeccion.fileprovider",
-                            photoFile);
-                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                    startActivityForResult(takePictureIntent, ImageUtils.REQUEST_CODE_CAPTURE);
-                }
-            }
+//            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+//            if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+//                // Create the File where the photo should go
+//                File photoFile = null;
+//                try {
+//                    photoFile = ImageUtils.createImageFile(getContext(), mMasterSession.values.currentUser.key);
+//                } catch (IOException ex) {
+//                    ex.printStackTrace();
+//                }
+//                if (photoFile != null) {
+//                    Uri photoURI = FileProvider.getUriForFile(getContext(),
+//                            "me.buddyoruna.appinspeccion.fileprovider",
+//                            photoFile);
+//                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+//                    startActivityForResult(takePictureIntent, ImageUtils.REQUEST_CODE_CAPTURE);
+//                }
+//            }
+            ImagePicker.with(this)                         //  Initialize ImagePicker with activity or fragment context
+                    .setToolbarColor("#212121")         //  Toolbar color
+                    .setStatusBarColor("#000000")       //  StatusBar color (works with SDK >= 21  )
+                    .setToolbarTextColor("#212121")     //  Toolbar text color (Title and Done button)
+                    .setToolbarIconColor("#212121")     //  Toolbar icon color (Back and Camera button)
+                    .setProgressBarColor("#4CAF50")     //  ProgressBar color
+                    .setBackgroundColor("#FFFFFF")      //  Background color
+                    .setCameraOnly(false)               //  Camera mode
+                    .setMultipleMode(false)              //  Select multiple images or single image
+                    .setFolderMode(true)                //  Folder mode
+                    .setShowCamera(true)                //  Show camera button
+                    .setFolderTitle("Galería de Imagenes")           //  Folder title (works with FolderMode = true)
+                    .setImageTitle("Galería")         //  Image title (works with FolderMode = false)
+                    .setDoneTitle("Ok")               //  Done button title
+                    .setLimitMessage("Has alcanzado el límite de selección.")    // Selection limit message
+                    .setMaxSize(3)                     //  Max images can be selected
+                    .setSavePath("ImagePicker")         //  Image capture folder name
+                    .setSelectedImages(new ArrayList<>())          //  Selected images
+                    .setAlwaysShowDoneButton(true)      //  Set always show done button in multiple mode
+                    .setRequestCode(100)                //  Set request code, default Config.RC_PICK_IMAGES
+                    .setKeepScreenOn(true)              //  Keep screen on when selecting images
+                    .start();                           //  Start ImagePicker
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void removeImageFlexBox(int position) {
+    private void removeImageFlexBox(int position) {
         try {
             //----------------------------------------------------------------
             int indexFlex = (position + 1);
@@ -231,7 +256,7 @@ public class ContentFotosFragment extends Fragment implements ImageViewFragment.
         this.mFileTemp = fileTemp;
     }
 
-    public int getIndexFileList(String nameFile) {
+    private int getIndexFileList(String nameFile) {
         int index = -1;
         for (int x = 0; x < mMasterSession.values.fileListFormDynamic.size(); x++) {
             if (mMasterSession.values.fileListFormDynamic.get(x).getFile().getAbsolutePath().equalsIgnoreCase(nameFile)) {
@@ -261,15 +286,28 @@ public class ContentFotosFragment extends Fragment implements ImageViewFragment.
         super.onDestroy();
     }
 
+//    @Override
+//    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        super.onActivityResult(requestCode, resultCode, data);
+//        if (requestCode == ImageUtils.REQUEST_CODE_CAPTURE) {
+//            if (resultCode == Activity.RESULT_OK) {
+//                setFileTemp(ImageUtils.galleryAddPic(getContext()));
+//                this.addImageFlexBox(true, 0);
+//            }
+//        }
+//    }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == ImageUtils.REQUEST_CODE_CAPTURE) {
-            if (resultCode == Activity.RESULT_OK) {
-                setFileTemp(ImageUtils.galleryAddPic(getContext()));
+        if (requestCode == Config.RC_PICK_IMAGES && resultCode == Activity.RESULT_OK && data != null) {
+            ArrayList<Image> images = data.getParcelableArrayListExtra(Config.EXTRA_IMAGES);
+            for (Image item : images) {
+                setFileTemp(new File(item.getPath()));
                 this.addImageFlexBox(true, 0);
             }
         }
+        super.onActivityResult(requestCode, resultCode, data);  // You MUST have this line to be here
+        // so ImagePicker can work with fragment mode
     }
 
     @Override
