@@ -70,12 +70,6 @@ public class ImageViewFragment extends DialogFragment {
             mListener.onEliminarImage(mPosition);
             dismiss();
         });
-
-//        if (getArguments().getBoolean(ARG_BOOLEAN)) {
-//            action_cancel.setVisibility(View.GONE);
-//            action_eliminar.setVisibility(View.GONE);
-//        }
-
         return view;
     }
 

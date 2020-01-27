@@ -92,14 +92,12 @@ public class ContentFotosFragment extends Fragment implements ImageViewFragment.
         mFlexboxLayout.setLayoutParams(llp2);
         mFlexboxLayout.setFlexDirection(FlexDirection.ROW);
 
-        //LinearLayout contentFlexbox = (LinearLayout) view.findViewById(R.id.content_flexbox);
         LinearLayout linearLayoutFlex = new LinearLayout(getActivity());
         LinearLayout.LayoutParams llpFlex = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         linearLayoutFlex.setLayoutParams(llpFlex);
         linearLayoutFlex.setPadding(10, 10, 10, 10);
         linearLayoutFlex.setGravity(Gravity.CENTER);
 
-        //linearLayoutFlex.setBackgroundColor(ContextCompat.getColor(getContext().getApplicationContext(), R.color.grey_10));
         linearLayoutFlex.setOrientation(LinearLayout.VERTICAL);
         mFlexboxLayout.addView(linearLayoutFlex);
         contentFlexbox.addView(mFlexboxLayout);
@@ -118,7 +116,7 @@ public class ContentFotosFragment extends Fragment implements ImageViewFragment.
         return view;
     }
 
-    public void addImageFlexBox(boolean isNuevo, int position) {
+    private void addImageFlexBox(boolean isNuevo, int position) {
         if (mMasterSession.values.fileListFormDynamic == null)
             mMasterSession.values.fileListFormDynamic = new ArrayList<>();
 
@@ -241,18 +239,29 @@ public class ContentFotosFragment extends Fragment implements ImageViewFragment.
     }
 
     public void removeImagenesFlexBox() {
-        try {
-            mFlexboxLayout.removeAllViews();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        //Limpiar imagenes
+        mFlexboxLayout.removeAllViews();
+        mFlexboxLayout.refreshDrawableState();
+
+        LinearLayout linearLayoutFlex = new LinearLayout(getActivity());
+        LinearLayout.LayoutParams llpFlex = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        linearLayoutFlex.setLayoutParams(llpFlex);
+        linearLayoutFlex.setPadding(10, 10, 10, 10);
+        linearLayoutFlex.setGravity(Gravity.CENTER);
+
+        linearLayoutFlex.setOrientation(LinearLayout.VERTICAL);
+        mFlexboxLayout.addView(linearLayoutFlex);
+        //----------------------------------------------
+
+        imageViewPositions = new HashMap<>();
+        imageViewPositionsInver = new HashMap<>();
     }
 
-    public File getFileTemp() {
+    private File getFileTemp() {
         return mFileTemp;
     }
 
-    public void setFileTemp(File fileTemp) {
+    private void setFileTemp(File fileTemp) {
         this.mFileTemp = fileTemp;
     }
 
@@ -267,11 +276,11 @@ public class ContentFotosFragment extends Fragment implements ImageViewFragment.
         return index;
     }
 
-    public List<FileInspeccion> getFileList() {
+    private List<FileInspeccion> getFileList() {
         return mMasterSession.values.fileListFormDynamic;
     }
 
-    public String getPathFileList(int position) {
+    private String getPathFileList(int position) {
         return mMasterSession.values.fileListFormDynamic.get(position).getFile().getAbsolutePath();
     }
 

@@ -8,12 +8,14 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import me.buddyoruna.appinspeccion.domain.db.AppDatabase;
 import me.buddyoruna.appinspeccion.domain.entity.BuzonFin;
 import me.buddyoruna.appinspeccion.domain.entity.BuzonInicio;
 import me.buddyoruna.appinspeccion.domain.entity.EstadoInspeccion;
@@ -31,13 +33,13 @@ public class FormularioViewModel extends AndroidViewModel {
     private final FormularioRepository repository;
     private MasterSession mMasterSession;
 
-    public FormularioViewModel(@NonNull Application application) {
+    public FormularioViewModel(@NonNull Application application, AppDatabase appDatabase) {
         super(application);
         this.mMasterSession = MasterSession.getInstance(application);
-        this.repository = new FormularioRepositoryImpl();
+        this.repository = new FormularioRepositoryImpl(appDatabase);
     }
 
-    public LiveData<Resource<String>> registrar(TipoInspeccion tipoInspeccion, String calle,
+    public LiveData<Resource<String>> registroFirebase(TipoInspeccion tipoInspeccion, String calle,
                                                 BuzonInicio buzInicio, BuzonFin buzFin, double longitudA, EstadoInspeccion estado,
                                                 double distanciaEntreBuzones, String observaciones) {
 
@@ -54,13 +56,60 @@ public class FormularioViewModel extends AndroidViewModel {
         formulario.estado = estado;
         formulario.distanciaEntreBuzones = distanciaEntreBuzones;
         formulario.observaciones = observaciones;
+        //Guardamos esto para cuando se trabaje en modo offline
+        formulario.fileInspeccionList = mMasterSession.values.fileListFormDynamic;
 
         List<String> files = new ArrayList<>();
         for (FileInspeccion item : mMasterSession.values.fileListFormDynamic) {
             files.add(item.getPathUpload());
         }
         formulario.fotos = files;
-        return repository.registrar(formulario);
+
+        return repository.registrarFirebase(formulario);
+    }
+
+    public Single<Resource<String>> registroLocal(TipoInspeccion tipoInspeccion, String calle,
+                                                  BuzonInicio buzInicio, BuzonFin buzFin, double longitudA, EstadoInspeccion estado,
+                                                  double distanciaEntreBuzones, String observaciones) {
+
+        Formulario formulario = new Formulario();
+        formulario.latitud = mMasterSession.values.currentMyPositionLatitude;
+        formulario.longitud = mMasterSession.values.currentMyPositionLongitude;
+        formulario.tipoInspeccion = tipoInspeccion;
+        formulario.calle = calle;
+        formulario.buzInicio = buzInicio;
+        formulario.buzFin = buzFin;
+        formulario.longitudA = longitudA;
+        formulario.fechaHoraStr = DateUtil.getDateNowFormat("dd/MM/yyyy HH:mm");
+        formulario.fechaHora = DateUtil.getDateNow().getTime();
+        formulario.estado = estado;
+        formulario.distanciaEntreBuzones = distanciaEntreBuzones;
+        formulario.observaciones = observaciones;
+        //Guardamos esto para cuando se trabaje en modo offline
+        formulario.fileInspeccionList = mMasterSession.values.fileListFormDynamic;
+//        List<String> files = new ArrayList<>();
+//        for (FileInspeccion item : mMasterSession.values.fileListFormDynamic) {
+//            files.add(item.getPathUpload());
+//        }
+        formulario.fotos = new ArrayList<>();
+
+        return repository.registrarLocal(formulario);
+    }
+
+    public Single<List<Formulario>> updateBatchLocal(List<Formulario> formularioList) {
+        return repository.updateBatchLocal(formularioList);
+    }
+
+    public Completable updateBatchFotosLocal(Map<String, List<String>> mapFormulariosFiltrados) {
+        return repository.updateBatchFotosLocal(mapFormulariosFiltrados);
+    }
+
+    public Observable<Resource<Formulario>> registrarFormularioPendienteEnvio(Formulario formulario)  {
+        return repository.registrarPendienteEnvio(formulario);
+    }
+
+    public LiveData<Map<String, Object>> obtenerFormulariosPendientes() {
+        return repository.obtenerPendientes();
     }
 
     public LiveData<Resource<List<TipoInspeccion>>> getTipoInspeccion() {
@@ -83,19 +132,30 @@ public class FormularioViewModel extends AndroidViewModel {
         return repository.loadFileInspeccion(fileInspeccion);
     }
 
+    public Observable<Resource<String>> updateFotosFormulario(String key, List<String> fotos) {
+        return repository.updateFotosFormulario(key, fotos);
+    }
+
+    public Completable eliminarFormulariosSincronizados(){
+        return repository.eliminarFormularioSincronizados();
+    }
+
     public static class Factory extends ViewModelProvider.NewInstanceFactory {
 
         @NonNull
         private final Application mApplication;
+        @NonNull
+        private final AppDatabase mDatabase;
 
         public Factory(@NonNull Application application) {
             mApplication = application;
+            mDatabase = AppDatabase.getInstance(application);
         }
 
         @Override
         public <T extends ViewModel> T create(Class<T> modelClass) {
             //noinspection unchecked
-            return (T) new FormularioViewModel(mApplication);
+            return (T) new FormularioViewModel(mApplication, mDatabase);
         }
     }
 

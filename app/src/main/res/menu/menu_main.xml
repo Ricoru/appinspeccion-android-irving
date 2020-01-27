@@ -13,10 +13,15 @@
         app:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/action_sincronizar"
+        android:orderInCategory="100"
+        android:icon="@drawable/ic_exit_to_app_black_24dp"
+        android:title="@string/lbl_sincronizar_pendientes" />
+
+    <item
         android:id="@+id/action_salir"
         android:orderInCategory="100"
         android:icon="@drawable/ic_exit_to_app_black_24dp"
-        android:title="@string/lbl_cerrar_session"
-        android:tooltipText="@string/lbl_cerrar_session" />
+        android:title="@string/lbl_cerrar_session" />
 
 </menu>

@@ -12,6 +12,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 
+import com.afollestad.materialdialogs.MaterialDialog;
+
 import me.buddyoruna.appinspeccion.R;
 import me.buddyoruna.appinspeccion.model.storage.MasterSession;
 import me.buddyoruna.appinspeccion.ui.contract.IBaseOnClick;
@@ -21,6 +23,7 @@ import me.buddyoruna.appinspeccion.ui.util.PermisosUtil;
 
 public class BaseActivity extends AppCompatActivity {
 
+    protected MaterialDialog mShowMessageDialog;
     protected MasterSession mMasterSession;
     protected Dialog mSuccessDialog;
     protected GPSUtil mGpsUtil;
@@ -69,6 +72,26 @@ public class BaseActivity extends AppCompatActivity {
 
         mSuccessDialog.show();
         mSuccessDialog.getWindow().setAttributes(lp);
+    }
+
+    protected void showMessageDialog(String content, IBaseOnClick iBaseOnClick) {
+        mShowMessageDialog = new MaterialDialog.Builder(BaseActivity.this)
+                .title("Mensaje")
+                .content(content)
+                .titleColorRes(R.color.colorAccent)
+                .widgetColorRes(R.color.colorPrimary)
+                .positiveColorRes(R.color.colorPrimaryDark)
+                .positiveText(R.string.action_ok)
+                .onPositive((dialog, which) -> {
+                    hideMessageDialog();
+                    iBaseOnClick.onBtnClick();
+                })
+                .build();
+        mShowMessageDialog.show();
+    }
+
+    protected void hideMessageDialog() {
+        mShowMessageDialog.dismiss();
     }
 
 }

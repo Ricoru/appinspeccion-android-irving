@@ -2,6 +2,7 @@ package me.buddyoruna.appinspeccion.ui.activity;
 
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -10,11 +11,14 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProviders;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
@@ -36,6 +40,7 @@ import me.buddyoruna.appinspeccion.domain.response.Resource;
 import me.buddyoruna.appinspeccion.ui.fragment.ContentFotosFragment;
 import me.buddyoruna.appinspeccion.ui.util.CustomDialog;
 import me.buddyoruna.appinspeccion.ui.util.MessageUtil;
+import me.buddyoruna.appinspeccion.ui.util.NetworkUtil;
 import me.buddyoruna.appinspeccion.viewmodel.FormularioViewModel;
 
 public class FormularioActivity extends BaseActivity {
@@ -60,8 +65,11 @@ public class FormularioActivity extends BaseActivity {
     LinearLayout view;
 
     FormularioViewModel modelView;
-    CustomDialog progressDialog;
+    FragmentTransaction fragmentTransaction;
     ContentFotosFragment fragmentContent;
+
+    CustomDialog progressDialog;
+    MaterialDialog dialogConfirmarRegistro;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,89 +86,128 @@ public class FormularioActivity extends BaseActivity {
 
         try {
             FragmentManager fragmentManager = getSupportFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction = fragmentManager.beginTransaction();
             fragmentContent = new ContentFotosFragment();
-//            fragmentTransaction.remove(fragmentContent);
-//            fragmentTransaction.commitAllowingStateLoss();
 
             fragmentTransaction.replace(R.id.content_fotos, fragmentContent);
             fragmentTransaction.commitAllowingStateLoss();
 
-            modelView.getTipoInspeccion().observe(this, resource -> {
-                if (resource.status.equals(Resource.Status.ERROR)) {
-                    Snackbar.make(view, resource.message, Snackbar.LENGTH_SHORT)
-                            .setAction("Action", null)
-                            .show();
-                    return;
-                }
+            if (NetworkUtil.isNetworkAvailable(FormularioActivity.this)) {
+                modelView.getTipoInspeccion().observe(this, resource -> {
+                    if (resource.status.equals(Resource.Status.ERROR)) {
+                        Snackbar.make(view, resource.message, Snackbar.LENGTH_SHORT)
+                                .setAction("Action", null)
+                                .show();
+                        return;
+                    }
 
-                ArrayAdapter<TipoInspeccion> tipoInspeccionArrayAdapter =
-                        new ArrayAdapter(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, resource.data) {
-                            public View getView(int position, View convertView, ViewGroup parent) {
-                                TextView tv = (TextView) super.getView(position, convertView, parent);
-                                tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorText));
-                                return tv;
-                            }
-                        };
+                    ArrayAdapter<TipoInspeccion> tipoInspeccionArrayAdapter = new ArrayAdapter(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, resource.data) {
+                        public View getView(int position, View convertView, ViewGroup parent) {
+                            TextView tv = (TextView) super.getView(position, convertView, parent);
+                            tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorText));
+                            return tv;
+                        }
+                    };
+                    sp_tipo_inspeccion.setAdapter(tipoInspeccionArrayAdapter);
+                });
+
+                modelView.getEstadoInspeccion().observe(this, resource -> {
+                    if (resource.status.equals(Resource.Status.ERROR)) {
+                        Snackbar.make(view, resource.message, Snackbar.LENGTH_SHORT)
+                                .setAction("Action", null)
+                                .show();
+                        return;
+                    }
+
+                    ArrayAdapter<EstadoInspeccion> estadoInspeccionArrayAdapter =
+                            new ArrayAdapter(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, resource.data) {
+                                public View getView(int position, View convertView, ViewGroup parent) {
+                                    TextView tv = (TextView) super.getView(position, convertView, parent);
+                                    tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorText));
+                                    return tv;
+                                }
+                            };
+                    sp_estado.setAdapter(estadoInspeccionArrayAdapter);
+                });
+
+                modelView.getBuzonInicio().observe(this, resource -> {
+                    if (resource.status.equals(Resource.Status.ERROR)) {
+                        Snackbar.make(view, resource.message, Snackbar.LENGTH_SHORT)
+                                .setAction("Action", null)
+                                .show();
+                        return;
+                    }
+
+                    ArrayAdapter<BuzonInicio> buzzonInicioArrayAdapter =
+                            new ArrayAdapter(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, resource.data) {
+                                public View getView(int position, View convertView, ViewGroup parent) {
+                                    TextView tv = (TextView) super.getView(position, convertView, parent);
+                                    tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorText));
+                                    return tv;
+                                }
+                            };
+                    sp_buzon_inicio.setAdapter(buzzonInicioArrayAdapter);
+                });
+
+                modelView.getBuzonFin().observe(this, resource -> {
+                    if (resource.status.equals(Resource.Status.ERROR)) {
+                        Snackbar.make(view, resource.message, Snackbar.LENGTH_SHORT)
+                                .setAction("Action", null)
+                                .show();
+                        return;
+                    }
+
+                    ArrayAdapter<BuzonFin> buzzonFinArrayAdapter =
+                            new ArrayAdapter(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, resource.data) {
+                                public View getView(int position, View convertView, ViewGroup parent) {
+                                    TextView tv = (TextView) super.getView(position, convertView, parent);
+                                    tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorText));
+                                    return tv;
+                                }
+                            };
+                    sp_buzon_fin.setAdapter(buzzonFinArrayAdapter);
+                });
+            } else {
+                ArrayAdapter<TipoInspeccion> tipoInspeccionArrayAdapter = new ArrayAdapter(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item,
+                        mMasterSession.values.tipoInspeccionList) {
+                    public View getView(int position, View convertView, ViewGroup parent) {
+                        TextView tv = (TextView) super.getView(position, convertView, parent);
+                        tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorText));
+                        return tv;
+                    }
+                };
                 sp_tipo_inspeccion.setAdapter(tipoInspeccionArrayAdapter);
-            });
 
-            modelView.getEstadoInspeccion().observe(this, resource -> {
-                if (resource.status.equals(Resource.Status.ERROR)) {
-                    Snackbar.make(view, resource.message, Snackbar.LENGTH_SHORT)
-                            .setAction("Action", null)
-                            .show();
-                    return;
-                }
-
-                ArrayAdapter<EstadoInspeccion> estadoInspeccionArrayAdapter =
-                        new ArrayAdapter(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, resource.data) {
-                            public View getView(int position, View convertView, ViewGroup parent) {
-                                TextView tv = (TextView) super.getView(position, convertView, parent);
-                                tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorText));
-                                return tv;
-                            }
-                        };
+                ArrayAdapter<EstadoInspeccion> estadoInspeccionArrayAdapter = new ArrayAdapter(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item,
+                        mMasterSession.values.estadoInspeccionList) {
+                    public View getView(int position, View convertView, ViewGroup parent) {
+                        TextView tv = (TextView) super.getView(position, convertView, parent);
+                        tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorText));
+                        return tv;
+                    }
+                };
                 sp_estado.setAdapter(estadoInspeccionArrayAdapter);
-            });
 
-            modelView.getBuzonInicio().observe(this, resource -> {
-                if (resource.status.equals(Resource.Status.ERROR)) {
-                    Snackbar.make(view, resource.message, Snackbar.LENGTH_SHORT)
-                            .setAction("Action", null)
-                            .show();
-                    return;
-                }
-
-                ArrayAdapter<BuzonInicio> buzzonInicioArrayAdapter =
-                        new ArrayAdapter(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, resource.data) {
-                            public View getView(int position, View convertView, ViewGroup parent) {
-                                TextView tv = (TextView) super.getView(position, convertView, parent);
-                                tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorText));
-                                return tv;
-                            }
-                        };
+                ArrayAdapter<BuzonInicio> buzzonInicioArrayAdapter = new ArrayAdapter(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item,
+                        mMasterSession.values.buzonInicioList) {
+                    public View getView(int position, View convertView, ViewGroup parent) {
+                        TextView tv = (TextView) super.getView(position, convertView, parent);
+                        tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorText));
+                        return tv;
+                    }
+                };
                 sp_buzon_inicio.setAdapter(buzzonInicioArrayAdapter);
-            });
 
-            modelView.getBuzonFin().observe(this, resource -> {
-                if (resource.status.equals(Resource.Status.ERROR)) {
-                    Snackbar.make(view, resource.message, Snackbar.LENGTH_SHORT)
-                            .setAction("Action", null)
-                            .show();
-                    return;
-                }
-
-                ArrayAdapter<BuzonFin> buzzonFinArrayAdapter =
-                        new ArrayAdapter(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, resource.data) {
-                            public View getView(int position, View convertView, ViewGroup parent) {
-                                TextView tv = (TextView) super.getView(position, convertView, parent);
-                                tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorText));
-                                return tv;
-                            }
-                        };
+                ArrayAdapter<BuzonInicio> buzzonFinArrayAdapter = new ArrayAdapter(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item,
+                        mMasterSession.values.buzonFinList) {
+                    public View getView(int position, View convertView, ViewGroup parent) {
+                        TextView tv = (TextView) super.getView(position, convertView, parent);
+                        tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorText));
+                        return tv;
+                    }
+                };
                 sp_buzon_fin.setAdapter(buzzonFinArrayAdapter);
-            });
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -197,9 +244,39 @@ public class FormularioActivity extends BaseActivity {
             MessageUtil.message(FormularioActivity.this, "Es necesario seleccionar un Estado de Inspección");
         }
 
+        dialogConfirmarRegistro = new MaterialDialog.Builder(FormularioActivity.this)
+                .title("Mensaje")
+                .content("¿Estás seguro de canjear?. Al dar clic en Aceptar, no se aceptará cambios ni devoluciones")
+                .negativeText("Volver a revisar")
+                .positiveText("Aceptar")
+                .positiveColorRes(R.color.colorAccent)
+                .negativeColorRes(R.color.colorText)
+                .onNegative((@NonNull MaterialDialog materialDialog, @NonNull DialogAction dialogAction) -> {
+                    dialogConfirmarRegistro.dismiss();
+                })
+                .onPositive((@NonNull MaterialDialog materialDialog, @NonNull DialogAction dialogAction) -> {
+                    dialogConfirmarRegistro.dismiss();
+                    procesarRegistro(tipoInspeccion, txt_direccion.getText().toString(), buzonInicio, buzonFin, longitud,
+                            estadoInspeccion, distance, txt_observacion.getText().toString());
+                })
+                .canceledOnTouchOutside(false)
+                .cancelable(false)
+                .build();
+        dialogConfirmarRegistro.show();
+    }
+
+    private void procesarRegistro(TipoInspeccion tipoInspeccion, String calle,
+                                  BuzonInicio buzonInicio, BuzonFin buzonFin, double longitud, EstadoInspeccion estadoInspeccion,
+                                  double distance, String observaciones) {
         progressDialog = new CustomDialog(FormularioActivity.this, getString(R.string.lbl_porfavor_espere),
                 getString(R.string.lbl_enviando_formulario));
         progressDialog.showDialog();
+
+        if (!NetworkUtil.isNetworkAvailable(FormularioActivity.this)) {
+            registrarFormularioLocal(tipoInspeccion, calle, buzonInicio, buzonFin, longitud,
+                    estadoInspeccion, distance, observaciones);
+            return;
+        }
 
         if (!mMasterSession.values.fileListFormDynamic.isEmpty()) {
             Observable
@@ -220,8 +297,8 @@ public class FormularioActivity extends BaseActivity {
                     .subscribe(listFiles -> {
                         updateUploadFiles(listFiles);
                         if (validateFilesSubidos()) {
-                            registrarFormulario(tipoInspeccion, txt_direccion.getText().toString(), buzonInicio, buzonFin, longitud,
-                                    estadoInspeccion, distance, txt_observacion.getText().toString());
+                            registrarFormularioFirebase(tipoInspeccion, calle, buzonInicio, buzonFin, longitud,
+                                    estadoInspeccion, distance, observaciones);
                         } else {
                             progressDialog.close();
                             MessageUtil.message(FormularioActivity.this, "Error al intentar subir los archivos al servidor, volver a intentarlo");
@@ -231,15 +308,15 @@ public class FormularioActivity extends BaseActivity {
                         MessageUtil.message(FormularioActivity.this, "Error al gurdar datos del Formulario, " + "\n" + " mensaje: " + err.getMessage());
                     });
         } else {
-            registrarFormulario(tipoInspeccion, txt_direccion.getText().toString(), buzonInicio, buzonFin, longitud,
-                    estadoInspeccion, distance, txt_observacion.getText().toString());
+            registrarFormularioFirebase(tipoInspeccion, calle, buzonInicio, buzonFin, longitud,
+                    estadoInspeccion, distance, observaciones);
         }
     }
 
-    private void registrarFormulario(TipoInspeccion tipoInspeccion, String calle,
-                                     BuzonInicio buzonInicio, BuzonFin buzonFin, double longitud, EstadoInspeccion estadoInspeccion,
-                                     double distance, String observaciones) {
-        modelView.registrar(tipoInspeccion, calle, buzonInicio, buzonFin, longitud, estadoInspeccion, distance, observaciones)
+    private void registrarFormularioFirebase(TipoInspeccion tipoInspeccion, String calle,
+                                             BuzonInicio buzonInicio, BuzonFin buzonFin, double longitud, EstadoInspeccion estadoInspeccion,
+                                             double distance, String observaciones) {
+        modelView.registroFirebase(tipoInspeccion, calle, buzonInicio, buzonFin, longitud, estadoInspeccion, distance, observaciones)
                 .observe(this, resource -> {
                     progressDialog.close();
                     if (resource.status.equals(Resource.Status.ERROR)) {
@@ -248,6 +325,27 @@ public class FormularioActivity extends BaseActivity {
                     }
 
                     showSuccessDialog("Registro Exitoso", resource.data, () -> limpiarDatos());
+                });
+    }
+
+    private void registrarFormularioLocal(TipoInspeccion tipoInspeccion, String calle,
+                                          BuzonInicio buzonInicio, BuzonFin buzonFin, double longitud, EstadoInspeccion estadoInspeccion,
+                                          double distance, String observaciones) {
+        modelView.registroLocal(tipoInspeccion, calle, buzonInicio, buzonFin, longitud, estadoInspeccion, distance, observaciones)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(resource -> {
+                    progressDialog.close();
+
+                    if (resource.status.equals(Resource.Status.ERROR)) {
+                        MessageUtil.message(FormularioActivity.this, "Error al gurdar datos del Formulario, " + "\n" + " mensaje: " + resource.message);
+                        return;
+                    }
+
+                    showSuccessDialog("Registro Exitoso", resource.data, () -> limpiarDatos());
+                }, err -> {
+                    progressDialog.close();
+                    MessageUtil.message(FormularioActivity.this, "Error al gurdar datos del Formulario, " + "\n" + " mensaje: " + err.getMessage());
                 });
     }
 
@@ -279,28 +377,23 @@ public class FormularioActivity extends BaseActivity {
     }
 
     private void limpiarDatos() {
-        sp_tipo_inspeccion.setSelection(0);
-        sp_estado.setSelection(0);
-        sp_buzon_inicio.setSelection(0);
-        sp_buzon_fin.setSelection(0);
-        txt_direccion.setText("");
-        txt_longitud.setText("");
-        txt_distancia_buzones.setText("");
-        txt_observacion.setText("");
+        try {
+            sp_tipo_inspeccion.setSelection(0);
+            sp_estado.setSelection(0);
+            sp_buzon_inicio.setSelection(0);
+            sp_buzon_fin.setSelection(0);
+            txt_direccion.setText("");
+            txt_longitud.setText("");
+            txt_distancia_buzones.setText("");
+            txt_observacion.setText("");
 
-        fragmentContent.removeImagenesFlexBox();
+            fragmentContent.removeImagenesFlexBox();
 
-        mMasterSession.values.fileListFormDynamic = new ArrayList<>();
-        mMasterSession.update();
-
-//        FragmentManager fragmentManager = getSupportFragmentManager();
-//        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-//        ContentFotosFragment fragment = new ContentFotosFragment();
-//        fragmentTransaction.remove(fragment);
-//        fragmentTransaction.commitAllowingStateLoss();
-//
-//        fragmentTransaction.add(R.id.content_fotos, fragment);
-//        fragmentTransaction.commitAllowingStateLoss();
+            mMasterSession.values.fileListFormDynamic = new ArrayList<>();
+            mMasterSession.update();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

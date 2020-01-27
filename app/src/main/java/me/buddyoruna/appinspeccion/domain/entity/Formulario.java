@@ -2,6 +2,7 @@ package me.buddyoruna.appinspeccion.domain.entity;
 
 import androidx.annotation.Keep;
 
+import com.google.firebase.firestore.Exclude;
 import com.google.firebase.firestore.IgnoreExtraProperties;
 
 import java.util.List;
@@ -10,6 +11,10 @@ import java.util.List;
 @IgnoreExtraProperties
 public class Formulario {
 
+    @Exclude
+    public int id;
+    @Exclude
+    public String key;
     public String uid; //userUID
     public double latitud;
     public double longitud;
@@ -24,5 +29,13 @@ public class Formulario {
     public double distanciaEntreBuzones;
     public String observaciones;
     public List<String> fotos;
+
+    @Exclude
+    public boolean isSycnFormulario;
+    @Exclude
+    public boolean isSycnFoto;
+
+    @Exclude
+    public List<FileInspeccion> fileInspeccionList;
 
 }

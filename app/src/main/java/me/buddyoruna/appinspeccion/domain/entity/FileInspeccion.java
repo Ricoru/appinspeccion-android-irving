@@ -11,6 +11,8 @@ import java.io.File;
 public class FileInspeccion {
 
     private boolean isUpload;
+
+    private String key;
     private File file;
     private String pathUpload;
 
@@ -41,6 +43,14 @@ public class FileInspeccion {
 
     public void setPathUpload(java.lang.String pathUpload) {
         this.pathUpload = pathUpload;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
     }
 
 }

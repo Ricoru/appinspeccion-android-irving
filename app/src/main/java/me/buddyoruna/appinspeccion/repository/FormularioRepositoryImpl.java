@@ -1,14 +1,16 @@
 package me.buddyoruna.appinspeccion.repository;
 
+import android.os.AsyncTask;
+import android.util.Log;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
+import androidx.lifecycle.Transformations;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreSettings;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -16,11 +18,17 @@ import com.google.firebase.storage.UploadTask;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Single;
 import me.buddyoruna.appinspeccion.MvpApp;
+import me.buddyoruna.appinspeccion.domain.db.AppDatabase;
+import me.buddyoruna.appinspeccion.domain.db.FormularioEntity;
 import me.buddyoruna.appinspeccion.domain.entity.BuzonFin;
 import me.buddyoruna.appinspeccion.domain.entity.BuzonInicio;
 import me.buddyoruna.appinspeccion.domain.entity.EstadoInspeccion;
@@ -28,6 +36,7 @@ import me.buddyoruna.appinspeccion.domain.entity.FileInspeccion;
 import me.buddyoruna.appinspeccion.domain.entity.Formulario;
 import me.buddyoruna.appinspeccion.domain.entity.TipoInspeccion;
 import me.buddyoruna.appinspeccion.domain.response.Resource;
+import me.buddyoruna.appinspeccion.model.mapper.FormularioMapper;
 import me.buddyoruna.appinspeccion.model.storage.MasterSession;
 import me.buddyoruna.appinspeccion.ui.util.Constant;
 
@@ -39,38 +48,109 @@ public class FormularioRepositoryImpl implements FormularioRepository {
     private static final String rootFormulario = "formularios";
     private static final String rootBuzones = "buzones";
 
+    private AppDatabase mDatabase;
     private FirebaseAuth mAuth;
-    private FirebaseFirestore db;
+    private FirebaseFirestore mFirebaseFirestore;
+    private FormularioMapper mFormularioMapper;
 
-    DocumentReference documentReference;
-    FirebaseStorage mStorage;
-    StorageReference mStorageRef;
+    private FirebaseStorage mStorage;
+    private StorageReference mStorageRef;
 
-    MasterSession masterSession;
-    CollectionReference collectionReference;
+    private MasterSession masterSession;
+    private CollectionReference collectionReference;
 
-    public FormularioRepositoryImpl() {
+    public FormularioRepositoryImpl(AppDatabase database) {
+        mDatabase = database;
         mAuth = FirebaseAuth.getInstance();
         mStorage = FirebaseStorage.getInstance();
         masterSession = MasterSession.getInstance(MvpApp.getContext());
-        db = FirebaseFirestore.getInstance();
-        FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
-                .setPersistenceEnabled(true)
-                .build();
-        db.setFirestoreSettings(settings);
-        collectionReference = FirebaseFirestore.getInstance().collection(rootName);
+        mFirebaseFirestore = FirebaseFirestore.getInstance();
+        mFormularioMapper = new FormularioMapper();
+        collectionReference = mFirebaseFirestore.collection(rootName);
     }
 
     @Override
-    public LiveData<Resource<String>> registrar(Formulario formulario) {
+    public Single<Resource<String>> registrarLocal(Formulario formulario) {
+        return Single.fromCallable(() -> {
+            formulario.uid = mAuth.getUid();
+            mDatabase.formularioDao().insert(mFormularioMapper.transforFormulario(formulario));
+            return Resource.success("No hay conexión a internet, los datos del formulario se guardaron en el equipo");
+        });
+    }
+
+    @Override
+    public Single<List<Formulario>> updateBatchLocal(List<Formulario> formularios) {
+        return Single.fromCallable(() -> {
+            mDatabase.formularioDao().updateAll(mFormularioMapper.transformListFormularioAtFormularioEntity(formularios));
+            return formularios;
+        });
+    }
+
+    @Override
+    public Completable updateBatchFotosLocal(Map<String, List<String>> mapFormulariosFiltrados) {
+        return Completable.fromAction(() -> {
+            for (Map.Entry<String, List<String>> entry : mapFormulariosFiltrados.entrySet()) {
+                FormularioEntity formularioEntity = mDatabase.formularioDao().findKey(entry.getKey());
+                if (formularioEntity != null) {
+                    formularioEntity.isSycnFoto = true;
+                    mDatabase.formularioDao().update(formularioEntity);
+                }
+            }
+        });
+    }
+
+    @Override
+    public Completable eliminarFormularioSincronizados() {
+        return Completable.fromAction(() -> mDatabase.formularioDao().eliminarFormularioMigrados());
+    }
+
+    @Override
+    public LiveData<Resource<String>> registrarFirebase(Formulario formulario) {
         final MediatorLiveData<Resource<String>> mObservableResult = new MediatorLiveData<>();
         formulario.uid = mAuth.getUid();
         collectionReference = FirebaseFirestore.getInstance().collection(rootFormulario);
-        collectionReference.add(formulario).addOnSuccessListener(aVoid -> mObservableResult.setValue(Resource.success("Los Datos del formulario se guardarón exitosamente")))
-                .addOnFailureListener(error -> {
-                    mObservableResult.setValue(Resource.error(error.getMessage(), null));
-                });
+        collectionReference.add(formulario).addOnSuccessListener(aVoid -> mObservableResult.setValue(Resource.success("Los Datos del formulario se guardaron exitosamente")))
+                .addOnFailureListener(error -> mObservableResult.setValue(Resource.error(error.getMessage(), null)));
         return mObservableResult;
+    }
+
+    @Override
+    public Observable<Resource<Formulario>> registrarPendienteEnvio(Formulario formulario) {
+        return Observable.create((ObservableOnSubscribe<Resource<Formulario>>) emiter -> {
+            collectionReference = FirebaseFirestore.getInstance().collection(rootFormulario);
+            collectionReference.add(formulario).addOnSuccessListener(documentReference -> {
+                formulario.key = documentReference.getId();
+                formulario.isSycnFormulario = true;
+                emiter.onNext(Resource.success(formulario));
+                emiter.onComplete();
+            }).addOnFailureListener(emiter::onError);
+        })
+        .onErrorReturn(err -> {
+            err.printStackTrace();
+            return Resource.error(err.getMessage(), null);
+        });
+    }
+
+    @Override
+    public LiveData<Map<String, Object>> obtenerPendientes() {
+        return Transformations.switchMap(mDatabase.formularioDao().getFormulariosPendientes(), form -> {
+            MediatorLiveData<Map<String, Object>> mObservableResult = new MediatorLiveData<>();
+            List<Formulario> formularios = mFormularioMapper.transformListFormularioEntityAtFormulario(form);
+
+            List<FileInspeccion> fileInspeccionList = new ArrayList<>();
+            for (Formulario item : formularios) {
+                for (FileInspeccion fileInspeccion : item.fileInspeccionList) {
+                    fileInspeccion.setKey(item.key);
+                    fileInspeccionList.add(fileInspeccion);
+                }
+            }
+
+            Map<String, Object> mapResource = new HashMap<>();
+            mapResource.put("formularios", formularios);
+            mapResource.put("formulariosFotos", fileInspeccionList);
+            mObservableResult.setValue(mapResource);
+            return mObservableResult;
+        });
     }
 
     @Override
@@ -94,6 +174,10 @@ public class FormularioRepositoryImpl implements FormularioRepository {
                 tipoInspeccion.key = doc.getId();
                 tipoInspeccions.add(tipoInspeccion);
             }
+
+            masterSession.values.tipoInspeccionList = tipoInspeccions;
+            masterSession.update();
+
             mObservableResult.setValue(Resource.success(tipoInspeccions));
         });
         return mObservableResult;
@@ -120,6 +204,12 @@ public class FormularioRepositoryImpl implements FormularioRepository {
                 estadoInspeccion.key = doc.getId();
                 estadoInspeccions.add(estadoInspeccion);
             }
+
+            Log.i("INFO", "loadEstadoInspeccion :: finish");
+
+            masterSession.values.estadoInspeccionList = estadoInspeccions;
+            masterSession.update();
+
             mObservableResult.setValue(Resource.success(estadoInspeccions));
         });
         return mObservableResult;
@@ -146,6 +236,10 @@ public class FormularioRepositoryImpl implements FormularioRepository {
                 buzonInicio.key = doc.getId();
                 buzonInicioList.add(buzonInicio);
             }
+
+            masterSession.values.buzonInicioList = buzonInicioList;
+            masterSession.update();
+
             mObservableResult.setValue(Resource.success(buzonInicioList));
         });
         return mObservableResult;
@@ -172,11 +266,16 @@ public class FormularioRepositoryImpl implements FormularioRepository {
                 buzonFin.key = doc.getId();
                 buzonFinList.add(buzonFin);
             }
+
+            masterSession.values.buzonFinList = buzonFinList;
+            masterSession.update();
+
             mObservableResult.setValue(Resource.success(buzonFinList));
         });
 
         return mObservableResult;
     }
+
 
     @Override
     public Observable<Resource<FileInspeccion>> loadFileInspeccion(FileInspeccion fileInspeccion) {
@@ -185,7 +284,7 @@ public class FormularioRepositoryImpl implements FormularioRepository {
             mStorageRef = mStorage.getReferenceFromUrl(Constant.URL_STORAGE);
             StorageReference imagesRef = mStorageRef
                     .child(Constant.STORAGE_USER)
-                    .child(fileInspeccion.getFile().getName() + "_inspeccion.jpg");
+                    .child(fileInspeccion.getFile().getName()); //+ "_inspeccion.jpg"
             InputStream stream = new FileInputStream(fileInspeccion.getFile());
             UploadTask uploadTask = imagesRef.putStream(stream);
 
@@ -206,33 +305,20 @@ public class FormularioRepositoryImpl implements FormularioRepository {
                 }
             });
         }).onErrorReturn(err -> Resource.error(err.getMessage(), null));
+    }
 
-//        return Observable.create(it -> {
-//            mStorage = FirebaseStorage.getInstance();
-//            mStorageRef = mStorage.getReferenceFromUrl(Constant.URL_STORAGE);
-//            StorageReference imagesRef = mStorageRef
-//                    .child(Constant.STORAGE_USER)
-//                    .child("inspeccion_" + mAuth.getUid() + "_img.jpg");
-//            InputStream stream = new FileInputStream(file);
-//            UploadTask uploadTask = imagesRef.putStream(stream);
-//            uploadTask.continueWithTask(task -> {
-//                if (!task.isSuccessful()) {
-//                    throw task.getException();
-//                }
-//                // Continue with the task to get the download URL
-//                return imagesRef.getDownloadUrl();
-//            }).addOnCompleteListener(task -> {
-//                if (task.isSuccessful()) {
-//                    if (!it.isDisposed()) {
-////                    iLoadFile.success(task.getResult().toString())
-//                        Observable.just(Resource.success(task.getResult().toString()));
-//                    }
-//                } else {
-////                    iLoadFile.exception(task.getException());
-//                    Observable.fromCallable(() -> Resource.error(task.getException().getMessage(), null));
-//                }
-//            });
-//        });
+    @Override
+    public Observable<Resource<String>> updateFotosFormulario(String key, List<String> fotos) {
+        return Observable.create((ObservableOnSubscribe<Resource<String>>) emiter -> {
+            collectionReference = FirebaseFirestore.getInstance().collection(rootFormulario);
+            collectionReference.document(key).update("fotos", fotos).addOnSuccessListener(aVoid -> {
+                emiter.onNext(Resource.success(key));
+                emiter.onComplete();
+            }).addOnFailureListener(emiter::onError);
+        }).onErrorReturn(err -> {
+            err.printStackTrace();
+            return Resource.error(err.getMessage(), null);
+        });
     }
 
 }
