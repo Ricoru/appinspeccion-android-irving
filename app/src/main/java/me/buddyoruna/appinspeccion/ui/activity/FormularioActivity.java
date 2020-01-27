@@ -246,9 +246,9 @@ public class FormularioActivity extends BaseActivity {
 
         dialogConfirmarRegistro = new MaterialDialog.Builder(FormularioActivity.this)
                 .title("Mensaje")
-                .content("¿Estás seguro de canjear?. Al dar clic en Aceptar, no se aceptará cambios ni devoluciones")
-                .negativeText("Volver a revisar")
-                .positiveText("Aceptar")
+                .content("¿Estás seguro de guardar los datos registrados?")
+                .negativeText(R.string.action_cancelar)
+                .positiveText(R.string.action_aceptar)
                 .positiveColorRes(R.color.colorAccent)
                 .negativeColorRes(R.color.colorText)
                 .onNegative((@NonNull MaterialDialog materialDialog, @NonNull DialogAction dialogAction) -> {

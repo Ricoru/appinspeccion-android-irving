@@ -5,6 +5,7 @@
     <string name="prompt_password">Password</string>
     <string name="action_sign_in">Ingresar</string>
 
+    <string name="action_aceptar">Aceptar</string>
     <string name="action_cancelar">Cancelar</string>
     <string name="action_eliminar">Eliminar</string>
 
